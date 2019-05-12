@@ -3,37 +3,31 @@
 #include "delay.h"
 #include "math.h"
 
-#define RamSize (100)
-//Ïà¹ØÊı¾İ³õÊ¼»¯
+/*ä½¿ç”¨ad9954å®ç°åŸºæœ¬çš„ç‚¹é¢‘ï¼Œè°ƒå¹…åŠFM*/
 
-/*FMµÄCFR¼Ä´æÆ÷ÅäÖÃ*/
+#define RamSize (100)//ramçš„é‡‡æ ·ç‚¹æ•°ä¸º100
+
+/*FMçš„CFRå¯„å­˜å™¨é…ç½®*/
 //uint8_t CFR1_DATA[4] = {0x80,0x00,0x00,0x00};
 //uint8_t CFR2_DATA[3] = {0x00,0x00,0xa4};
 
-/*µãÆµ£¬·ù¶È¿É¿ØCFRÓëASF¼Ä´æÆ÷ÅäÖÃ*/
+/*ç‚¹é¢‘ä¸‹ï¼Œå¹…åº¦å¯æ§CFRä¸ASFå¯„å­˜å™¨é…ç½®*/
 uint8_t CFR1_DATA[4] = {0x02,0x00,0x20,0x00};
 uint8_t CFR2_DATA[3] = {0x00,0x00,0xa4};
 
-/*µãÆµÏÂµÄCFR¼Ä´æÆ÷ÅäÖÃ*/
-//uint8_t CFR1_DATA[4] = {0x00,0x00,0x20,0x00};
-//uint8_t CFR2_DATA[3] = {0x00,0x00,0xa4};
-
-uint8_t RSCW0_DATA[5] = {0x35,0x0c,0x63,0x00,0x80};//µ÷ÖÆĞÅºÅÆµÂÊÓ¦µÈÓÚ   sclk/£¨ram ramp rate*µãÊı£© 
-                                                   //
-uint8_t ByteStorage[4];//ÓÃÓÚ´æ·ÅËÄ×Ö½ÚµÄËÄ¸ö°ËÎ»   0·ÅÖÃ¸ß°ËÎ»£¬ÒÔ´ËÀàÍÆ
+/*ramç›¸å…³é…ç½®*/
 uint32_t RAM_TABLE[RamSize];
-//uint32_t fre_c = 100000000;//ÔØ²¨ÆµÂÊ
-//uint32_t fre_m = 100000000/(RamSize*3125);//»ù²¨ÆµÂÊ
-//uint32_t fre_m = 1000;
-//uint32_t fre_delta = 30000;//×î´óÆµÆ«
+uint8_t RSCW0_DATA[5] = {0x35,0x0c,0x63,0x00,0x80};// è°ƒåˆ¶ä¿¡å·é¢‘ç‡åº”ç­‰äº   sclk/ï¼ˆram ramp rate*ç‚¹æ•°ï¼‰ 
+                                                   
+uint8_t ByteStorage[4];//ç”¨äºå­˜æ”¾å››å­—èŠ‚çš„å››ä¸ªå…«ä½   0æ”¾ç½®é«˜å…«ä½ï¼Œä»¥æ­¤ç±»æ¨
 
 
 /*------
-function£º¶ÔËùÓĞÒı½ÅÀ­¸ßÀ­µÍµÄ³õÊ¼×´Ì¬½øĞĞÅäÖÃ
+functionï¼šå¯¹æ‰€æœ‰å¼•è„šæ‹‰é«˜æ‹‰ä½çš„åˆå§‹çŠ¶æ€è¿›è¡Œé…ç½®
 -------*/
 void GPIO_ad9954_initialize(void)
 {
-    //Òı½Å³õÊ¼»¯
+    //å¼•è„šåˆå§‹åŒ–
     RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD,ENABLE);
     RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOG,ENABLE);
     
@@ -53,8 +47,11 @@ void GPIO_ad9954_initialize(void)
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
     GPIO_Init(GPIOG,&GPIO_InitStructure);
     
-    //GPIO_ResetBits(GPIOD, GPIO_Pin_0|GPIO_Pin_2|GPIO_Pin_4|GPIO_Pin_6);
-    //GPIO_ResetBits(GPIOG, GPIO_Pin_9|GPIO_Pin_11|GPIO_Pin_13);
+	//ä¸‹é¢æ³¨é‡Šçš„ä¸¤æ­¥æ˜¯ç¡®ä¿åˆå§‹åŒ–å¼•è„šä¿è¯ä¸ºä½
+    	//GPIO_ResetBits(GPIOD, GPIO_Pin_0|GPIO_Pin_2|GPIO_Pin_4|GPIO_Pin_6);
+    	//GPIO_ResetBits(GPIOG, GPIO_Pin_9|GPIO_Pin_11|GPIO_Pin_13);
+	
+	/*â€»è¿™é‡Œéœ€è¦è¯´æ˜ä¸€ç‚¹ï¼Œä¸åŒæ¿å­å¼•è„šçŠ¶æ€æœ‰æ‰€ä¸åŒï¼Œæ‰€ä»¥å¼•è„šé…ç½®ä¸ºä½ï¼›å¦å¤–å¼•è„šåˆå§‹åŒ–æ—¶é¦–å…ˆå°†sclkå¼•è„šè¿›è¡Œè®¾ç½®*/
     
     PS0 = 0;
     PS1 = 0;
@@ -62,39 +59,35 @@ void GPIO_ad9954_initialize(void)
 }
 
 /*------
-function£ºio¸üĞÂ£¨´îÅä×Ô¶¨ÒådelayÊ¹ÓÃ£©
+functionï¼šioæ›´æ–°ï¼ˆæ­é…è‡ªå®šä¹‰delayä½¿ç”¨ï¼‰
 -------*/
 void ad9954_update(void)
 {
-    IO_UPDATE=0;
-    
+    	IO_UPDATE=0;
 	IO_UPDATE = 1;
-    delay_us(200);
-    IO_UPDATE = 0;
+    	delay_us(200);
+    	IO_UPDATE = 0;
 }
 
 /*------
-function£º¸´Î»£¨´îÅä×Ô¶¨ÒådelayÊ¹ÓÃ£© Ğè×¢Òâ9954ĞèÒªÏÈresetÔÙÊ¹ÓÃ
+functionï¼šå¤ä½ï¼ˆæ­é…è‡ªå®šä¹‰delayä½¿ç”¨ï¼‰ éœ€æ³¨æ„9954éœ€è¦å…ˆresetå†ä½¿ç”¨
 -------*/
 void ad9954_reset(void)
 {
-    SCLK = 0;
+    	SCLK = 0;/*æœ‰é™æ‹‰ä½sclk*/
 	PS0 = 0;
 	PS1 = 0;
 	IO_UPDATE = 0;
 	RESET = 0;
 	RESET = 1;
 	delay_us(2000);
-    RESET = 0;
+    	RESET = 0;
 }
 /*--------
-function:Ïà¹ØÒı½Å³õÊ¼»¯¶¨Òå£»¸´Î»£»³õÊ¼»¯ÅäÖÃÒ»Ğ©¼Ä´æÆ÷
+function:ç›¸å…³å¼•è„šåˆå§‹åŒ–å®šä¹‰ï¼›å¤ä½ï¼›åˆå§‹åŒ–é…ç½®ä¸€äº›å¯„å­˜å™¨
 ---------*/
 void ad9954_init()
 {
-    //ÅäÖÃÒı½Å³õÊ¼»¯
-    //¸´Î»
-    //³õÊ¼¼Ä´æÆ÷ÉèÖÃ
     ad9954_WriteDataToRegister(CFR1_ADD,CFR1_DATA,4,1);
     ad9954_WriteDataToRegister(CFR2_ADD,CFR2_DATA,3,1);
 }
@@ -102,33 +95,35 @@ void ad9954_init()
 
 
 /*----------
-function:Ïò¼Ä´æÆ÷Ğ´ÈëÊı¾İ
-parameter:¼Ä´æÆ÷µØÖ·£»ĞèÒªĞ´ÈëµÄÊı¾İ£»±»Ğ´Èë¼Ä´æÆ÷µÄ×Ö½ÚÊı£¨¿ØÖÆ×Ö½ÚĞ´Èë£©£»¸üĞÂflag
+function:å‘å¯„å­˜å™¨å†™å…¥æ•°æ®
+parameter:å¯„å­˜å™¨åœ°å€ï¼›éœ€è¦å†™å…¥çš„æ•°æ®ï¼›è¢«å†™å…¥å¯„å­˜å™¨çš„å­—èŠ‚æ•°ï¼ˆæ§åˆ¶å­—èŠ‚å†™å…¥ï¼‰ï¼›æ›´æ–°flag
 return:NULL
-note£ºĞ´ÈëË³Ğò£ºMSB-->LSB
+note1ï¼šå†™å…¥é¡ºåºï¼šMSB-->LSB
+note2: MSBå†™å…¥æ—¶ï¼Œä»å¯„å­˜å™¨çš„æœ€é«˜ä½å¼€å§‹å†™å…¥
 ----------*/
 void ad9954_WriteDataToRegister(uint8_t RegisterAddress,uint8_t* InputData,uint8_t NumberOfRegister,uint8_t flag)
 {
-    u8	ControlValue = 0;
+    	u8	ControlValue = 0;
 	u8	ValueToWrite = 0;
 	u8	i = 0;
 
 	ControlValue = RegisterAddress;
-//Ğ´ÈëµØÖ·
-		for (i=0; i<8; i++)
+
+//å†™å…¥å¯„å­˜å™¨åœ°å€		
+	for (i=0; i<8; i++)
 		{
 			SCLK = 0;
 			if(0x80 == (ControlValue & 0x80))
 			SDIO1= 1;	  
 			else
 			SDIO1= 0;
-            __nop();
-            __nop();
-            __nop();
+            		__nop();
+           		__nop();
+           		__nop();
 			SCLK = 1;
-            __nop();
-            __nop();
-            __nop();
+            		__nop();
+           		__nop();
+           		__nop();
 			ControlValue <<= 1;
 		}
          __nop();
@@ -136,8 +131,9 @@ void ad9954_WriteDataToRegister(uint8_t RegisterAddress,uint8_t* InputData,uint8
          __nop();
          delay_us(10);
          SCLK = 0;	
-//Ğ´ÈëÊı¾İ
-	for (uint8_t RegisterIndex=0; RegisterIndex<NumberOfRegister; RegisterIndex++)//¿ØÖÆ×Ö½ÚĞ´Èë
+
+//å†™å…¥æ•°æ®
+	for (uint8_t RegisterIndex=0; RegisterIndex<NumberOfRegister; RegisterIndex++)//æ§åˆ¶å­—èŠ‚å†™å…¥
 	{
 		
         ValueToWrite = InputData[RegisterIndex];
@@ -164,9 +160,14 @@ void ad9954_WriteDataToRegister(uint8_t RegisterAddress,uint8_t* InputData,uint8
          SCLK = 0;		
 	}	
 	if(1==flag)
-    ad9954_update();
+    	ad9954_update();
     
 }
+
+
+/*-------
+function:ç”¨äºç›´æ¥å‘é€8bitï¼›ä¸åä¸€ä¸ªå‡½æ•°ä¸åŒçš„æ˜¯ï¼Œåä¸€ä¸ªå‡½æ•°å¯¹äºå¤šä¸ªå­—èŠ‚éœ€è¦å°†æ¯ä¸ªå­—èŠ‚å­˜å…¥æ•°ç»„
+--------*/
 void ad9954_WriteByte(uint8_t ValueToWrite)
 {
     for (uint8_t i=0; i<8; i++)
@@ -194,15 +195,15 @@ void ad9954_WriteByte(uint8_t ValueToWrite)
 
 }
 /*-------
-function:½ö½øĞĞ´®¿ÚĞ´ÈëÊı¾İµÄ²Ù×÷£¬²»ĞèÒªÊ¶±ğ¼Ä´æÆ÷µØÖ·
+function:ä»…è¿›è¡Œä¸²å£å†™å…¥æ•°æ®çš„æ“ä½œï¼Œä¸éœ€è¦è¯†åˆ«å¯„å­˜å™¨åœ°å€
 --------*/
 void ad9954_WriteData(uint8_t* InputData,uint8_t NumberOfArrayElement,uint8_t flag)
 {
 	u8	ValueToWrite = 0;
 	u8	i = 0;
     
-    //Ğ´ÈëÊı¾İ
-	for (uint8_t ArrayElementIndex=0; ArrayElementIndex<NumberOfArrayElement; ArrayElementIndex++)//¿ØÖÆ×Ö½ÚĞ´Èë
+    //å†™å…¥æ•°æ®
+	for (uint8_t ArrayElementIndex=0; ArrayElementIndex<NumberOfArrayElement; ArrayElementIndex++)//æ§åˆ¶å­—èŠ‚å†™å…¥
 	{
 		
         ValueToWrite = InputData[ArrayElementIndex];
@@ -236,32 +237,26 @@ void ad9954_WriteData(uint8_t* InputData,uint8_t NumberOfArrayElement,uint8_t fl
 
 
 /*--------
-function£ºÏòramĞ´Êı¾İ
-return£ºnull
-parameter£ºnull
-issue£ºÈÔÒª¸Ä½ø£ºÉèÖÃÈë¿Ú²ÎÊıÎªÆğÊ¼µØÖ·£¬½áÊøµØÖ·£¬Êı¾İÁ¿
-Ä¿Ç°Ö§³Ö1024È«²¿Ğ´Èë
-Ä¿Ç°ramsizeÎª100£¬Ôò·´ÍÆramp rateÎª1000000/fre_m
+functionï¼šå‘ramå†™æ•°æ®
+returnï¼šnull
+parameterï¼šfre_m:åŸºæ³¢é¢‘ç‡;fre_delta:æœ€å¤§é¢‘å;fre_c:è½½æ³¢é¢‘ç‡
+ç›®å‰ramsizeä¸º100ï¼Œåˆ™åæ¨ramp rateä¸º1000000/fre_m
 ---------*/
 void ad9954_WriteDataToRAM(u32 fre_m,u32 fre_delta,u32 fre_c)
 {
-    //FMÏÂµÄ¼Ä´æÆ÷ÅäÖÃ
+    //FMä¸‹çš„å¯„å­˜å™¨é…ç½®
     uint8_t CFR1_DATA_FM[4] = {0x80,0x00,0x00,0x00};
     uint8_t CFR2_DATA_FM[3] = {0x00,0x00,0xa4};
-    uint8_t instruction_byte[1] = {0x0b};//Ğ£Ñé×Ö½Ú
-    //³õÊ¼»¯Êı¾İ
-    
-    //fre_m = 100000000/(RamSize*3125);//»ù²¨ÆµÂÊ
-    
-    //fre_delta = 30000;//×î´óÆµÆ«
-    //¹«Ê½Ğ´Èëram±í
+    uint8_t instruction_byte[1] = {0x0b};//æ ¡éªŒå­—èŠ‚
+
+    //å…¬å¼å†™å…¥ramè¡¨
     for(uint16_t j = 0;j<RamSize;j++)
     {
         
         RAM_TABLE[j] = fre_c+fre_delta*sin(2*3.14*j/(RamSize-1));
     }
     
-    //½«Êµ¼ÊĞèÒªµÄramp rateĞ´Èë¼Ä´æÆ÷ ramp rateÕ¼¸ß16Î»
+    //å°†å®é™…éœ€è¦çš„ramp rateå†™å…¥å¯„å­˜å™¨ ramp rateå é«˜16ä½
     uint16_t temp2;
     temp2 = 1000000/fre_m;
     RSCW0_DATA[0] = (u8)(temp2);
@@ -271,10 +266,10 @@ void ad9954_WriteDataToRAM(u32 fre_m,u32 fre_delta,u32 fre_c)
     ad9954_WriteDataToRegister(RSCW0_ADD,RSCW0_DATA,5,1);
     PS0 = 0;
     PS1 = 0;
-    //·¢ËÍ0x0b×öÎªĞ£Ñé×Ö½Ú
+    //å‘é€0x0båšä¸ºæ ¡éªŒå­—èŠ‚
     ad9954_WriteData(instruction_byte,1,0);
     
-    //½«Êı¾İ·¢ËÍ¸øram
+    //å°†æ•°æ®å‘é€ç»™ram
     
     for(uint16_t RamIndex=0; RamIndex<RamSize; RamIndex++)
     {
@@ -288,6 +283,12 @@ void ad9954_WriteDataToRAM(u32 fre_m,u32 fre_delta,u32 fre_c)
     ad9954_update();
     
 }
+
+/*-------
+function:å•é¢‘æ¨¡å¼ä¸‹å†™å…¥é¢‘ç‡
+parameterï¼šå¡«å…¥çš„é¢‘ç‡ï¼ˆå°†å¡«å…¥çš„é¢‘ç‡åˆ’åˆ†æˆå››ä¸ª8bitï¼ŒæŒ‰ç…§data sheetå‘ç»™FTWï¼‰
+noteï¼šæ³¨æ„å¦‚æœå…ˆä½¿ç”¨FMå†ä½¿ç”¨å•é¢‘è¦è®°å¾—ä¿®æ”¹å¯„å­˜å™¨ï¼›ç¨‹åºåˆå§‹åŒ–ç”¨çš„å•é¢‘é…ç½®
+--------*/
 void Write_frequence(u32 Freq)
 {	 
       u8 CFTW0_DATA[4] ={0x00,0x00,0x00,0x00};
@@ -300,6 +301,12 @@ void Write_frequence(u32 Freq)
       ad9954_WriteDataToRegister(FTW0_ADD,CFTW0_DATA,4,1);
       
 }
+
+/*-------
+function:å•é¢‘æ¨¡å¼ä¸‹å†™å…¥å¹…åº¦
+parameterï¼šå¡«å…¥çš„å¹…åº¦æ§åˆ¶å­—ï¼ˆä¸æ˜¯å®é™…ç”µå‹å€¼ï¼‰
+noteï¼šæ ¹æ®DDSå‡ºé¢‘ç‡çš„æ–¹æ³•éœ€è¦çŸ¥é“é¢‘ç‡è¾ƒé«˜æ—¶ï¼Œå¹…åº¦ä¼šæœ‰è¡°å‡
+--------*/
 void Write_amplitude(u16 ScaleFactor)
 {
      u8 ASF_DATA[2] = {0x00,0x00};
